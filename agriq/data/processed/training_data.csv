@@ -1,0 +1,4 @@
+parcel_id,crop,N,P,K,temperature,humidity,ph,rainfall,suitable
+P001,wheat,85,55,40,18.5,65.0,7.2,180,1
+P001,barley,70,50,38,16.0,60.0,7.2,150,1
+P002,lentils,40,30,25,22.0,55.0,7.0,90,0

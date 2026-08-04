@@ -1,0 +1,7 @@
+parcel_id,crop,suitability_score
+P001,wheat,0.92
+P001,barley,0.85
+P001,lentils,0.41
+P002,wheat,0.78
+P002,barley,0.81
+P002,lentils,0.55

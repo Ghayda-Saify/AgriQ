@@ -1,0 +1,4 @@
+parcel_id,lat,lon,area_ha,governorate,soil_ph,elevation_m
+P001,33.5138,36.2765,12.5,Damascus,7.2,680
+P002,36.2021,37.1343,8.3,Aleppo,7.0,390
+P003,34.7268,36.7234,15.0,Homs,6.8,510

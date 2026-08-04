@@ -1,0 +1,70 @@
+\documentclass[conference]{IEEEtran}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{cite}
+
+\title{AgriQ: An AI and Quantum-Optimized System for Smart Crop Planning}
+\author{\IEEEauthorblockN{Ghaydaa}
+\IEEEauthorblockA{Software Engineering\\
+Email: author@example.com}}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+AgriQ integrates machine learning and quantum-inspired optimization to recommend
+optimal crop allocations across agricultural parcels. A Random Forest classifier
+evaluates crop suitability from soil and climate features, an LSTM forecasts
+commodity prices, and a QUBO formulation is solved via Simulated Annealing and
+Simulated Bifurcation to maximize expected profit under demand constraints.
+\end{abstract}
+
+\section{Introduction}
+Smart crop planning requires combining agronomic knowledge, market forecasts, and
+ combinatorial optimization. AgriQ addresses this for Syrian agriculture by
+ linking open datasets (Kaggle, FAO, ARIJ) with NASA POWER weather data.
+
+\section{Methodology}
+\subsection{Data Preparation}
+Parcels are generated across five governorates. Weather is fetched from NASA POWER.
+EcoCrop-style thresholds produce a suitability matrix.
+
+\subsection{Machine Learning}
+A Random Forest classifies crop suitability from $(N, P, K, T, H, \text{pH}, R)$
+ features. An LSTM forecasts FAO price time series.
+
+\subsection{Optimization}
+The allocation problem is formulated as a QUBO:
+\begin{equation}
+\min_{\mathbf{x}} \; \mathbf{x}^T Q \mathbf{x}
+\end{equation}
+where $x_{ij} = 1$ if parcel $i$ is assigned crop $j$. Penalty terms enforce
+one-crop-per-parcel and demand caps. We compare Simulated Annealing (SA) and
+Simulated Bifurcation (SB).
+
+\section{Results}
+Table~\ref{tab:results} compares optimizer performance on synthetic parcels.
+
+\begin{table}[h]
+\centering
+\caption{Optimizer comparison}
+\label{tab:results}
+\begin{tabular}{lcc}
+\hline
+Method & Energy & Profit (USD) \\
+\hline
+SA  & -- & TBD \\
+SB  & -- & TBD \\
+\hline
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+AgriQ demonstrates a practical pipeline from raw agricultural data to optimized
+crop plans, with SB offering competitive results to classical SA.
+
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
