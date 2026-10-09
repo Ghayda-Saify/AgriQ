@@ -1,0 +1,12 @@
+crop,price_usd_per_t,price_status,price_source,yield_rainfed_t_ha,yield_irrigated_t_ha,yield_status,yield_source,notes
+wheat,527.1,REAL,PCBS 2023 PPI Survey (Anbar Wheat 97.06 NIS/50kg / 3.6829),2.72,18.38,REAL_JENIN,"PCBS 2010/11 Table 19E, Jenin governorate field crops",Jenin field-crop aggregate is predominantly wheat/barley
+barley,530.5,REAL,PCBS 2023 PPI Survey (97.68 NIS/50kg / 3.6829),2.72,18.38,REAL_JENIN,"PCBS 2010/11 Table 19E, Jenin governorate field crops",Not in the 10-crop list; retained as field-crop reference
+potatoes,586.5,REAL,PCBS 2023 PPI Survey (Local Potato M 2.16 NIS/kg / 3.6829),5.28,19.65,PROXY_REGION,"PCBS 2010/11 Table 17E, North West Bank vegetables (aggregate)",GAP: per-crop yield needed from FAOSTAT
+tomatoes,556.6,REAL,PCBS 2023 PPI Survey (Local Tomato 2.05 NIS/kg / 3.6829),5.28,19.65,PROXY_REGION,"PCBS 2010/11 Table 17E, North West Bank vegetables (aggregate)",GAP: per-crop yield needed from FAOSTAT
+cucumbers,654.4,REAL,PCBS 2023 PPI Survey (Local Cucumber 2.41 NIS/kg / 3.6829),5.28,19.65,PROXY_REGION,"PCBS 2010/11 Table 17E, North West Bank vegetables (aggregate)","Jenin has the largest cucumber area in Palestine (6,360 dunum, 2021 Census)"
+onions,548.5,REAL,PCBS 2023 PPI Survey (Dry Onion 2.02 NIS/kg / 3.6829),5.28,19.65,PROXY_REGION,"PCBS 2010/11 Table 17E, North West Bank vegetables (aggregate)",GAP: per-crop yield needed from FAOSTAT
+eggplants,344.8,REAL,PCBS 2023 PPI Survey (Eggplant 1.27 NIS/kg / 3.6829),5.28,19.65,PROXY_REGION,"PCBS 2010/11 Table 17E, North West Bank vegetables (aggregate)",GAP: per-crop yield needed from FAOSTAT
+oranges,610.9,REAL,PCBS 2023 PPI Survey (Navel Orange L 2.25 NIS/kg / 3.6829),,,GAP,"PCBS 2010/11 Table 14E lumps all non-olive trees as 'Others'",GAP: citrus yield needed from FAOSTAT
+grapes,719.5,REAL,PCBS 2023 PPI Survey (Local White Grape 2.65 NIS/kg / 3.6829),,,GAP,"PCBS 2010/11 Table 14E lumps all non-olive trees as 'Others'",GAP: grape yield needed from FAOSTAT
+olives,,GAP,Not listed in PCBS 2023 producer price table,1.43,1.43,REAL_REGION,"PCBS 2010/11 Table 14E, North West Bank olives",Largest crop by area: 341578 dunum in North WB. GAP: olive price
+maize,,GAP,Not listed in PCBS 2023 producer price table,,,GAP,Not separated in PCBS tables,GAP: both price and yield needed from FAOSTAT
