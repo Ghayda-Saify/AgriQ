@@ -28,3 +28,7 @@ Thumbs.db
 
 # Superseded scaffold kept locally for reference only
 agriq/_deprecated_syrian_scaffold/
+
+# Personal hour submissions, not project code
+work_hours_to_enter.md
+worklog_*.csv
