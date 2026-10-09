@@ -1,0 +1,11 @@
+crop,last_year,price_persistence_usd_t,price_lstm_usd_t
+wheat,2024,503.8,535.9
+potatoes,2024,1688.5,702.4
+tomatoes,2024,2345.2,446.5
+cucumbers,2024,944.8,698.3
+onions,2024,2736.5,397.1
+eggplants,2024,1526.2,568.6
+maize,2024,680.5,664.8
+olives,2024,2026.1,1964.3
+grapes,2024,1294.4,2276.5
+oranges,2024,3611.3,406.8

@@ -1,78 +1,44 @@
-"""Train Random Forest classifier for crop suitability."""
-
-from __future__ import annotations
-
-import argparse
-import pickle
-from pathlib import Path
-
-import pandas as pd
+"""Random Forest crop-suitability model, with real and synthetic data
+evaluated SEPARATELY (never pooled into one headline accuracy)."""
+import csv, numpy as np
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import StratifiedKFold, cross_val_score
+from sklearn.dummy import DummyClassifier
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from ecocrop import synth_rows
 
-FEATURE_COLUMNS = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"]
+D = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+FEATS = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"]
 
+real = list(csv.DictReader(open(f"{D}/data/raw/Crop_recommendation.csv")))
+for r in real: r["source"] = "kaggle_real"
+synth = synth_rows(real)
 
-def train_random_forest(
-    training_path: Path,
-    model_path: Path,
-    scaler_path: Path,
-    test_size: float = 0.2,
-    random_state: int = 42,
-) -> RandomForestClassifier:
-    """Train and persist RF model plus feature scaler."""
-    df = pd.read_csv(training_path)
-    X = df[FEATURE_COLUMNS]
-    y = df["suitable"]
+def XY(rows):
+    X = np.array([[float(r[f]) for f in FEATS] for r in rows])
+    y = np.array([r["label"] for r in rows])
+    return X, y
 
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X_scaled, y, test_size=test_size, random_state=random_state, stratify=y
-    )
+Xr, yr = XY(real); Xs, ys = XY(synth)
+print(f"real rows {len(real)} ({len(set(yr))} crops) | synthetic rows {len(synth)} ({len(set(ys))} crops)")
 
-    model = RandomForestClassifier(
-        n_estimators=200,
-        max_depth=12,
-        random_state=random_state,
-        class_weight="balanced",
-    )
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
-    print(classification_report(y_test, y_pred))
+cv = StratifiedKFold(5, shuffle=True, random_state=0)
+rf = lambda: RandomForestClassifier(n_estimators=300, random_state=0, n_jobs=2)
 
-    model_path.parent.mkdir(parents=True, exist_ok=True)
-    with model_path.open("wb") as f:
-        pickle.dump(model, f)
-    with scaler_path.open("wb") as f:
-        pickle.dump(scaler, f)
+print("\n--- EVALUATION (reported separately, never pooled) ---")
+s = cross_val_score(rf(), Xr, yr, cv=cv, n_jobs=1)
+print(f"  1. REAL data, 5-fold CV      : {s.mean():.4f} +/- {s.std():.4f}   <- genuine predictive accuracy")
+d = cross_val_score(DummyClassifier(strategy='most_frequent'), Xr, yr, cv=cv)
+print(f"     majority-class baseline   : {d.mean():.4f}                    <- floor")
+s2 = cross_val_score(rf(), Xs, ys, cv=cv, n_jobs=1)
+print(f"  2. SYNTHETIC data, 5-fold CV : {s2.mean():.4f} +/- {s2.std():.4f}   <- EcoCrop envelope fidelity, NOT a result")
 
-    return model
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Train Random Forest model.")
-    parser.add_argument(
-        "--training",
-        type=Path,
-        default=Path("data/processed/training_data.csv"),
-    )
-    parser.add_argument(
-        "--model",
-        type=Path,
-        default=Path("models/random_forest.pkl"),
-    )
-    parser.add_argument(
-        "--scaler",
-        type=Path,
-        default=Path("models/scaler.pkl"),
-    )
-    args = parser.parse_args()
-    train_random_forest(args.training, args.model, args.scaler)
-    print(f"Saved model to {args.model} and scaler to {args.scaler}")
-
-
-if __name__ == "__main__":
-    main()
+Xa = np.vstack([Xr, Xs]); ya = np.concatenate([yr, ys])
+model = rf().fit(Xa, ya)
+print(f"\ncombined model trained on {len(ya)} rows, {len(set(ya))} classes")
+imp = sorted(zip(FEATS, model.feature_importances_), key=lambda t: -t[1])
+print("feature importance:", ", ".join(f"{f} {v:.3f}" for f, v in imp))
+import pickle
+pickle.dump({"model": model, "feats": FEATS}, open("rf_model.pkl", "wb"))
+print("saved rf_model.pkl")

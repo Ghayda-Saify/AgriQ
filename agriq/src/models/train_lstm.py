@@ -1,137 +1,97 @@
-"""Train LSTM model for crop price forecasting."""
+"""Pooled LSTM price forecasting for 10 Palestinian crops, benchmarked
+against four standard baselines with strict walk-forward validation."""
+import csv, glob, numpy as np
+import os, sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lstm import LSTM
 
-from __future__ import annotations
+D = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+PP = f"{D}/data/raw/FAOSTAT_data_en_8-15-2026.csv"
+ITEM = {"wheat":"Wheat","potatoes":"Potatoes","tomatoes":"Tomatoes",
+ "cucumbers":"Cucumbers and gherkins",
+ "onions":"Onions and shallots, dry (excluding dehydrated)",
+ "eggplants":"Eggplants (aubergines)","maize":"Green corn (maize)",
+ "olives":"Olives","grapes":"Grapes","oranges":"Oranges"}
+CROPS = list(ITEM)
+L = 5          # window length
+N_TEST = 5     # last 5 years held out per crop
 
-import argparse
-from pathlib import Path
+LOG=True
+MAXYR=2023
+rows = list(csv.DictReader(open(PP, encoding="utf-8-sig")))
+series = {}
+for c, it in ITEM.items():
+    v = sorted((int(r["Year"]), (np.log(float(r["Value"])) if LOG else float(r["Value"]))) for r in rows
+               if r["Item"] == it and r["Value"] and int(r["Year"])<=MAXYR)
+    series[c] = v
+print("series lengths:", {c: len(v) for c, v in series.items()})
 
-import numpy as np
-import pandas as pd
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader, TensorDataset
+# ---- windows, split BEFORE normalising (no leakage) ----------------------
+def windows(vals, L):
+    return [(vals[i:i+L], vals[i+L]) for i in range(len(vals)-L)]
 
+train, test, stats = [], [], {}
+for ci, c in enumerate(CROPS):
+    p = [x for _, x in series[c]]
+    cut = len(p) - N_TEST
+    tr_p = p[:cut]
+    mu, sd = float(np.mean(tr_p)), float(np.std(tr_p)) or 1.0
+    stats[c] = (mu, sd)
+    for seq, tgt in windows(p, L):
+        rec = (ci, [(x-mu)/sd for x in seq], (tgt-mu)/sd, seq, tgt)
+        (test if p.index(tgt) >= cut else train).append(rec)
+print(f"train windows {len(train)}  test windows {len(test)}")
 
-class PriceLSTM(nn.Module):
-    """Simple univariate LSTM for price time series."""
+def to_XY(recs):
+    X = np.zeros((len(recs), L, 1+len(CROPS))); y = np.zeros(len(recs))
+    for k,(ci,seq,tgt,_,_) in enumerate(recs):
+        for t in range(L):
+            X[k,t,0] = seq[t]; X[k,t,1+ci] = 1.0
+        y[k] = tgt
+    return X, y
 
-    def __init__(self, input_size: int = 1, hidden_size: int = 32, num_layers: int = 2):
-        super().__init__()
-        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(hidden_size, 1)
+# ---- augmentation: jitter + magnitude warp (train only) ------------------
+rng = np.random.default_rng(0)
+aug = list(train)
+for _ in range(5):
+    for ci, seq, tgt, rs, rt in train:
+        s = np.array(seq)
+        j = s + rng.normal(0, 0.05*max(np.std(s),1e-3), L)   # jitter
+        w = j * rng.uniform(0.95, 1.05)                      # magnitude warp
+        aug.append((ci, list(w), tgt, rs, rt))
+print(f"augmented train windows: {len(aug)}  (x{len(aug)/len(train):.1f})")
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        output, _ = self.lstm(x)
-        return self.fc(output[:, -1, :])
+Xtr, ytr = to_XY(aug); Xte, yte = to_XY(test)
+model = LSTM(1+len(CROPS), n_hidden=24, seed=0).fit(Xtr, ytr, epochs=350, lr=0.01, batch=64)
+pred_n = model.predict(Xte)
 
+# ---- de-normalise and compare against baselines --------------------------
+def rmse(a,b): return float(np.sqrt(np.mean((np.array(a)-np.array(b))**2)))
+def mape(a,b): return float(np.mean(np.abs((np.array(a)-np.array(b))/np.array(b)))*100)
 
-def create_sequences(values: np.ndarray, seq_len: int = 3) -> tuple[np.ndarray, np.ndarray]:
-    """Build sliding-window sequences from a 1D array."""
-    X, y = [], []
-    for i in range(len(values) - seq_len):
-        X.append(values[i : i + seq_len])
-        y.append(values[i + seq_len])
-    return np.array(X), np.array(y)
+actual, lstm_p, naive, mean3, trend, ar1 = [], [], [], [], [], []
+for k,(ci,seq,tgt,rs,rt) in enumerate(test):
+    mu, sd = stats[CROPS[ci]]
+    actual.append(np.exp(rt) if LOG else rt)
+    lstm_p.append(np.exp(pred_n[k]*sd+mu) if LOG else pred_n[k]*sd+mu)
+    naive.append(np.exp(rs[-1]) if LOG else rs[-1])
+    mean3.append(float(np.exp(np.mean(rs[-3:])) if LOG else np.mean(rs[-3:])))
+    x = np.arange(L); m,b0 = np.polyfit(x, rs, 1); trend.append(float(np.exp(m*L+b0) if LOG else m*L+b0))
+    a = np.array(rs[:-1]); bb = np.array(rs[1:])
+    coef = float((a@bb)/(a@a)) if a@a else 1.0
+    ar1.append(float(np.exp(coef*rs[-1]) if LOG else coef*rs[-1]))
 
-
-def train_lstm(
-    prices_path: Path,
-    model_path: Path,
-    crop: str = "Wheat",
-    seq_len: int = 3,
-    epochs: int = 100,
-    lr: float = 0.01,
-) -> PriceLSTM:
-    """Train LSTM on FAO price history for a single crop."""
-    df = pd.read_csv(prices_path)
-    crop_prices = df.loc[df["item"] == crop, "price_usd_per_tonne"].values.astype(np.float32)
-
-    if len(crop_prices) <= seq_len:
-        crop_prices = np.tile(crop_prices, 5).astype(np.float32)
-
-    X, y = create_sequences(crop_prices, seq_len=seq_len)
-    X_tensor = torch.tensor(X).unsqueeze(-1)
-    y_tensor = torch.tensor(y).unsqueeze(-1)
-
-    dataset = TensorDataset(X_tensor, y_tensor)
-    loader = DataLoader(dataset, batch_size=min(8, len(dataset)), shuffle=True)
-
-    model = PriceLSTM()
-    criterion = nn.MSELoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
-
-    model.train()
-    for _ in range(epochs):
-        for batch_x, batch_y in loader:
-            optimizer.zero_grad()
-            preds = model(batch_x)
-            loss = criterion(preds, batch_y)
-            loss.backward()
-            optimizer.step()
-
-    model_path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), model_path)
-    return model
-
-
-def forecast_prices(
-    model: PriceLSTM,
-    history: np.ndarray,
-    seq_len: int,
-    horizon: int,
-) -> list[float]:
-    """Autoregressive multi-step forecast."""
-    model.eval()
-    window = history[-seq_len:].tolist()
-    forecasts: list[float] = []
-
-    with torch.no_grad():
-        for _ in range(horizon):
-            x = torch.tensor(window[-seq_len:]).float().view(1, seq_len, 1)
-            pred = model(x).item()
-            forecasts.append(pred)
-            window.append(pred)
-
-    return forecasts
-
-
-def main() -> None:
-    parser = argparse.ArgumentParser(description="Train LSTM price forecaster.")
-    parser.add_argument(
-        "--prices",
-        type=Path,
-        default=Path("data/raw/fao_prices.csv"),
-    )
-    parser.add_argument(
-        "--model",
-        type=Path,
-        default=Path("models/lstm_price.pth"),
-    )
-    parser.add_argument(
-        "--output",
-        type=Path,
-        default=Path("data/processed/price_forecast.csv"),
-    )
-    parser.add_argument("--crop", default="Wheat")
-    args = parser.parse_args()
-
-    model = train_lstm(args.prices, args.model, crop=args.crop)
-    df = pd.read_csv(args.prices)
-    history = df.loc[df["item"] == args.crop, "price_usd_per_tonne"].values.astype(np.float32)
-    forecasts = forecast_prices(model, history, seq_len=3, horizon=2)
-
-    last_year = int(df.loc[df["item"] == args.crop, "year"].max())
-    forecast_df = pd.DataFrame(
-        {
-            "crop": [args.crop.lower()] * len(forecasts),
-            "year": [last_year + i + 1 for i in range(len(forecasts))],
-            "forecast_price_usd": forecasts,
-        }
-    )
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    forecast_df.to_csv(args.output, index=False)
-    print(f"Saved LSTM to {args.model} and forecast to {args.output}")
-
-
-if __name__ == "__main__":
-    main()
+print("\n" + "="*62)
+print("PRICE FORECAST BENCHMARK - LOG SCALE (walk-forward, last 5 yrs x 10 crops)")
+print("="*62)
+print(f"{'model':<22}{'RMSE USD/t':>12}{'MAPE %':>10}")
+print("-"*62)
+res = [("LSTM (pooled+aug)", lstm_p), ("Naive (persistence)", naive),
+       ("Mean of last 3", mean3), ("Linear trend", trend), ("AR(1)", ar1)]
+for nm, p in res:
+    print(f"{nm:<22}{rmse(p,actual):>12.1f}{mape(p,actual):>10.1f}")
+best = min(res, key=lambda t: rmse(t[1], actual))
+print("-"*62)
+print(f"BEST: {best[0]}")
+print("=> LSTM beats persistence" if rmse(lstm_p,actual)<rmse(naive,actual)
+      else "=> LSTM does NOT beat persistence")
