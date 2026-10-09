@@ -1,10 +1,19 @@
+# Core — required to reproduce every result in the paper
 numpy>=1.24
 pandas>=2.0
 scikit-learn>=1.3
-torch>=2.0
-requests>=2.31
-streamlit>=1.28
+scipy>=1.11
 matplotlib>=3.7
-seaborn>=0.13
-jupyter>=1.0
-pytest>=7.4
+
+# Re-fetching raw data from source APIs (NASA POWER, SoilGrids)
+requests>=2.31
+
+# Re-clipping parcels from the OSM and Oslo shapefiles
+pyshp>=2.3
+pyproj>=3.6
+
+# Word export of the paper (paper/main.docx)
+python-docx>=1.1
+
+# Optional: exploratory Streamlit dashboard, not used for any paper result
+# streamlit>=1.28
