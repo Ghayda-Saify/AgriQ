@@ -94,7 +94,7 @@ def main() -> int:
     ap.add_argument("--output", type=Path,
                     default=here / "data" / "processed" / "soilgrids_jenin.csv")
     ap.add_argument("--zones", default="A,C",
-                    help="Oslo zones to fetch (default A,C)")
+                    help="administrative classes to fetch (default A,C)")
     ap.add_argument("--min-ha", type=float, default=0.1)
     ap.add_argument("--max-ha", type=float, default=100.0)
     ap.add_argument("--limit", type=int, default=0, help="0 = all")

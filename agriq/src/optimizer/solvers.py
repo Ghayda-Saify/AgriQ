@@ -93,20 +93,45 @@ def sa(Q, n_sweeps=200, T0=None, T1=None, seed=0):
 
 
 # --------------------------------------------------------------------------
+def repair_water(q, assign, budget):
+    """Fallow parcels until total irrigation fits `budget`, worst first.
+
+    Applied identically to EVERY arm. Previously only greedy was held to the
+    budget while the QUBO solvers ran unconstrained, which both made the
+    greedy comparison unfair and let the solvers buy profit with water nobody
+    has: plans used 5.97-7.50 Mm3 against a licensed agricultural abstraction
+    of 1.0 Mm3 for Jenin (PCBS 2018).
+
+    Parcels are dropped in ascending order of margin PER CUBIC METRE, which is
+    the correct order when water is the scarce input -- dropping by absolute
+    margin would shed efficient low-water parcels before thirsty ones.
+    """
+    assign = np.asarray(assign).copy()
+    margin = q.area[:, None] * (q.price * q.yld - q.cost)
+    water = float(sum(q.wuse[i, assign[i]] for i in range(q.P)))
+    if water <= budget:
+        return assign, water
+    eff = []
+    for i in range(q.P):
+        j = assign[i]
+        w = q.wuse[i, j]
+        eff.append(margin[i, j] / w if (j != 0 and w > 0) else -np.inf)
+    for i in np.argsort(eff):          # ascending: least profit per m3 goes first
+        if water <= budget:
+            break
+        if assign[i] != 0:
+            water -= q.wuse[i, assign[i]]
+            assign[i] = 0
+    return assign, water
+
+
 def greedy(q):
-    """Per-parcel best gross margin, ignoring coupling. Repairs water at the end."""
-    P, C = q.P, q.C
+    """Per-parcel best gross margin, ignoring market coupling. Unconstrained;
+    the caller applies repair_water so every arm is treated identically."""
     margin = q.area[:, None] * (q.price * q.yld - q.cost)
     margin = np.where(q.suit >= q.suit_min, margin, -np.inf)
     margin[:, 0] = 0.0                       # fallow always available
-    assign = np.argmax(margin, axis=1)
-    order = np.argsort([-margin[i, assign[i]] for i in range(P)])
-    water = sum(q.wuse[i, assign[i]] for i in range(P))
-    for i in order[::-1]:
-        if water <= q.water_budget: break
-        if assign[i] != 0:
-            water -= q.wuse[i, assign[i]]; assign[i] = 0
-    return assign
+    return np.argmax(margin, axis=1)
 
 
 def decode(q, binary):

@@ -67,13 +67,12 @@ def fig_encoding():
     print("fig_encoding.pdf")
 
 
-# ---- Figure 2: parcel map by Oslo zone -------------------------------------
+# ---- Figure 2: study parcel map -------------------------------------
 def fig_map():
     rows = [r for r in rd("jenin_parcels_zoned.csv")
-            if r["zone"] in ("A", "C") and 0.1 <= float(r["area_ha"]) <= 100.0]
+            if r["zone"] == "A" and 0.1 <= float(r["area_ha"]) <= 100.0]
     fig, ax = plt.subplots(figsize=(3.5, 2.9))
-    for z, col, lab in (("A", BLUE, "Area A/B - farmer-controlled"),
-                        ("C", ORANGE, "Area C - access restricted")):
+    for z, col, lab in (("A", BLUE, "study parcels"),):
         s = [r for r in rows if r["zone"] == z]
         ax.scatter([float(r["lon"]) for r in s], [float(r["lat"]) for r in s],
                    s=[float(r["area_ha"])*1.6 for r in s], c=col, alpha=0.6,
@@ -92,8 +91,7 @@ def fig_water():
         print("water_sweep.csv missing - skipping fig_water"); return
     rows = rd("water_sweep.csv")
     fig, ax = plt.subplots(figsize=(3.5, 2.4))
-    for z, col, lab in (("A", BLUE, "Areas A/B (174 parcels)"),
-                        ("AC", ORANGE, "A/B + Area C (284 parcels)")):
+    for z, col, lab in (("A", BLUE, "study parcels (174)"),):
         s = sorted([r for r in rows if r["zone"] == z], key=lambda r: float(r["lam"]))
         if not s: continue
         x = [float(r["lam"]) for r in s]
@@ -101,15 +99,17 @@ def fig_water():
         e = [float(r["water_sd"])/1e6 for r in s]
         ax.errorbar(x, y, yerr=e, color=col, marker="o", markersize=3,
                     linewidth=1.1, capsize=2, label=lab)
-    ms = os.path.join(ROOT, "data", "processed", "water_sweep_market_scaled.csv")
-    if os.path.exists(ms):
-        s2 = sorted(rd("water_sweep_market_scaled.csv"), key=lambda r: float(r["lam"]))
-        ax.plot([float(r["lam"]) for r in s2], [float(r["water_m3"])/1e6 for r in s2],
-                color=ORANGE, linestyle="--", marker="s", markersize=2.5, linewidth=0.9,
-                label="A/B + Area C, market scaled with land")
-    ax.axhline(6.0, color=GREY, linestyle="--", linewidth=0.9)
-    ax.text(ax.get_xlim()[1], 6.12, r"Jenin budget 6.0 Mm$^3$/yr", fontsize=6,
-            color=GREY, ha="right")
+    # The licensed agricultural allocation, not the 6.0 Mm3 total that includes
+    # domestic supply. Demand never approaches it at any price swept, which is
+    # the point of the figure: pricing cannot reach this budget.
+    ax.axhline(1.0, color=ORANGE, linestyle="--", linewidth=1.0)
+    ax.text(ax.get_xlim()[1], 1.15,
+            r"licensed agricultural budget 1.0 Mm$^3$/yr (PCBS)", fontsize=6,
+            color=ORANGE, ha="right")
+    ax.set_xscale("symlog", linthresh=1.0)
+    ax.set_xticks([0, 0.5, 1, 2, 3, 8, 20])
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_ylim(0, None)
     ax.set_xlabel(r"Water charge $\lambda$ (USD/m$^3$)")
     ax.set_ylabel(r"Irrigation demand (Mm$^3$/yr)")
     ax.legend(frameon=False, loc="upper right", fontsize=6)
@@ -118,6 +118,48 @@ def fig_water():
     print("fig_water.pdf")
 
 
+def fig_mwall():
+    """Profit against the domain-wall ordering penalty, both solvers, with the
+    one-hot references. This is the figure that carries the paper's argument:
+    one-hot dSB sits far below everything, domain-wall lifts it past the
+    one-hot reference, and the apparent sign of the annealing effect depends
+    entirely on where M_wall is set."""
+    f = os.path.join(ROOT, "data", "processed", "mwall_sweep.csv")
+    if not os.path.exists(f):
+        print("mwall_sweep.csv missing - skipping fig_mwall"); return
+    rows = rd("mwall_sweep.csv")
+    bench = rd("benchmark_results.csv")
+
+    def ref(enc, s):
+        v = [float(r["profit"]) for r in bench
+             if r["encoding"] == enc and r["solver"] == s]
+        return np.mean(v) / 1e6
+
+    fig, ax = plt.subplots(figsize=(3.5, 2.6))
+    mws = sorted({float(r["m_wall"]) for r in rows})
+    for s, col, mk in (("SA", BLUE, "o"), ("dSB", ORANGE, "s")):
+        mu, sd = [], []
+        for mw in mws:
+            v = np.array([float(r["profit"]) for r in rows
+                          if float(r["m_wall"]) == mw and r["solver"] == s]) / 1e6
+            mu.append(v.mean()); sd.append(v.std())
+        ax.errorbar(mws, mu, yerr=sd, color=col, marker=mk, markersize=3.5,
+                    linewidth=1.2, capsize=2, label=f"domain-wall, {s}")
+    for s, col, ls in (("SA", BLUE, ":"), ("dSB", ORANGE, "-.")):
+        ax.axhline(ref("one-hot", s), color=col, linestyle=ls, linewidth=0.9)
+        ax.text(mws[0], ref("one-hot", s) + 0.12, f"one-hot {s}",
+                fontsize=6, color=col, ha="left")
+    ax.set_xscale("log", base=2)
+    ax.set_xticks(mws)
+    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+    ax.set_xlabel(r"Domain-wall ordering penalty $M_{\mathrm{wall}}$")
+    ax.set_ylabel("Profit (M USD/yr)")
+    ax.legend(frameon=False, loc="lower right", fontsize=6)
+    fig.savefig(os.path.join(FIG, "fig_mwall.pdf"))
+    plt.close(fig)
+    print("fig_mwall.pdf")
+
+
 if __name__ == "__main__":
-    fig_encoding(); fig_map(); fig_water()
+    fig_encoding(); fig_map(); fig_water(); fig_mwall()
     print("figures ->", FIG)

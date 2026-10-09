@@ -6,14 +6,22 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.dummy import DummyClassifier
 import os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from ecocrop import synth_rows
+from ecocrop import synth_rows, KAGGLE_SUPERSEDED
 
 D = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 FEATS = ["N", "P", "K", "temperature", "humidity", "ph", "rainfall"]
 
-real = list(csv.DictReader(open(f"{D}/data/raw/Crop_recommendation.csv")))
-for r in real: r["source"] = "kaggle_real"
-synth = synth_rows(real)
+kaggle = list(csv.DictReader(open(f"{D}/data/raw/Crop_recommendation.csv")))
+for r in kaggle: r["source"] = "kaggle_real"
+# NPK donors are drawn from the full Kaggle set, so synthesise before filtering.
+synth = synth_rows(kaggle)
+# Drop the Kaggle rows for study crops now labelled from EcoCrop, so no crop
+# carries two conflicting envelopes. The remaining Kaggle crops stay in as
+# real-data context the classifier must discriminate against.
+dropped = [r for r in kaggle if r["label"] in KAGGLE_SUPERSEDED]
+real = [r for r in kaggle if r["label"] not in KAGGLE_SUPERSEDED]
+print(f"dropped {len(dropped)} Kaggle rows superseded by EcoCrop: "
+      f"{sorted(KAGGLE_SUPERSEDED)}")
 
 def XY(rows):
     X = np.array([[float(r[f]) for f in FEATS] for r in rows])

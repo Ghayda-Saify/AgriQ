@@ -28,7 +28,11 @@ from instance import build, fao_prices, CROPS
 from solvers import sa, decode
 from water_price import sweeps_from_benchmark
 
-N_SEEDS = 10
+# 10 seeds left the mean's standard error (~0.16 Mm3) larger than the
+# demand change across the budget crossing (~0.11 Mm3), so neither the
+# shadow price nor any price scenario was separable from solver noise.
+# 50 seeds halves the standard error.
+N_SEEDS = 50
 SWEEPS = sweeps_from_benchmark()   # matched SA budget from benchmark.py
 PERISHABLE = {"tomatoes", "cucumbers", "onions", "eggplants", "potatoes", "oranges"}
 

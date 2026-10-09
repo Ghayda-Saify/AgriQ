@@ -30,6 +30,7 @@ import make_figures  # noqa: E402
 make_figures.fig_encoding()
 make_figures.fig_map()
 make_figures.fig_water()
+make_figures.fig_mwall()
 
 FIG = os.path.join(ROOT, "paper", "figures")
 for f in sorted(os.listdir(FIG)):

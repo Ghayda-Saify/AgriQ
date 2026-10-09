@@ -90,7 +90,7 @@ def fao_yields():
     return out
 
 def load_parcels(zone="A", lo=0.1, hi=100.0):
-    """`zone` may be a single zone ("A") or several ("AC") for the Area C
+    """`zone` may be a single administrative class ("A") or several ("AC") for a
     counterfactual, which optimises A/B and C together."""
     want=set(zone)
     rows=[r for r in csv.DictReader(open(os.path.join(ROOT,"data","processed","jenin_parcels_zoned.csv")))
@@ -177,10 +177,10 @@ def build(zone="A", lam=0.15, M=0.5, prices=None, M_onehot=None, demand_zone="A"
     # Market-size proxy (ASSUMPTION, flagged in paper): no crop-level demand
     # data exists for Jenin, so D_j is set to DEMAND_SHARE of the production
     # capacity of the Area A/B instance. It is computed from A/B even when
-    # optimising a larger instance: adding Area C land adds supply, not
+    # optimising a larger instance: adding land adds supply, not
     # buyers, so the counterfactual must face the SAME market. (Computing D_j
     # from each instance's own capacity made demand grow in proportion to
-    # land and made the Area C loss track land share by construction.)
+    # land and made any land-base comparison track area share by construction.)
     ref_area=np.array([float(r["area_ha"]) for r in ref])
     tot=ref_area.sum()*np.array([Y[c] for c in CROPS])
     demand=np.where(tot>0, tot*DEMAND_SHARE*market_scale, 1e12)

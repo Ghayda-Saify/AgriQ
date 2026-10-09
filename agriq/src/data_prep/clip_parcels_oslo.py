@@ -69,5 +69,5 @@ ctrl=[d for d in rows if d["zone"]=="A" and 0.1<=d["area_ha"]<=100]
 print(f"\nCONTROLLABLE (Area A/B, 0.1-100 ha): {len(ctrl)} parcels, "
       f"{sum(d['area_ha'] for d in ctrl):,.0f} ha")
 areac=[d for d in rows if d["zone"]=="C" and 0.1<=d["area_ha"]<=100]
-print(f"Area C (excluded by Oslo)          : {len(areac)} parcels, "
+print(f"Other administrative class         : {len(areac)} parcels, "
       f"{sum(d['area_ha'] for d in areac):,.0f} ha")
