@@ -1,0 +1,18 @@
+SEED CONTROL (identical prices, different seeds)
+  crop-mix similarity     :  93.0%   <- noise floor for the table below
+  seed-to-seed mix spread :  74.0% (mean pairwise)
+  parcel-level agreement  :  18.4%   <- degenerate, not informative
+
+scenario                 profit     sd  mix sim  parcel   top crops by area
+--------------------------------------------------------------------------------------------
+baseline 2019-23          5.36M  0.29M       --      --   tomatoes 17%, grapes 12%, cucumbers 10%, olives 10%
+LSTM forecast             4.96M  0.41M    93.0%    8.0%   tomatoes 18%, cucumbers 12%, grapes 11%, onions 10%
+persistence (2023)        4.93M  0.29M    93.7%   16.7%   tomatoes 19%, olives 11%, grapes 10%, cucumbers 10%
+uniform -30%              1.45M  0.15M    84.6%   12.1%   grapes 17%, olives 12%, wheat 10%, fallow 10%
+uniform -15%              3.20M  0.15M    90.6%   15.5%   grapes 16%, tomatoes 14%, cucumbers 10%, olives 10%
+uniform +15%              7.41M  0.38M    93.2%   14.9%   tomatoes 19%, cucumbers 13%, grapes 12%, olives 8%
+uniform +30%              9.80M  0.60M    91.6%   11.5%   tomatoes 23%, grapes 12%, cucumbers 11%, eggplants 10%
+perishables -30%          2.38M  0.14M    84.4%   10.9%   grapes 23%, olives 11%, tomatoes 11%, wheat 10%
+perishables +30%          8.86M  0.53M    92.1%   12.1%   tomatoes 21%, grapes 11%, cucumbers 11%, fallow 10%
+
+wrote G:\Uni\AgriQ An AI and Quantum-Optimized System for Smart Crop Planning\agriq\data\processed\price_robustness.csv

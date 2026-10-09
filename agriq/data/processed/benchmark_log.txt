@@ -1,0 +1,21 @@
+instance: 174 parcels, 1,464 ha | one-hot 1914 vars, domain-wall 1740 vars
+wall-clock budget per run: 2.51s (one-hot dSB, 1000 steps)
+[one-hot] dSB 1000 steps, SA 62 sweeps
+  SA   profit $5.42M +/- 0.26M | invalid   0.0 | unsuitable   0.5 | water 5.48 Mm3 | 2.46s
+  dSB  profit $1.98M +/- 0.42M | invalid 129.1 | unsuitable  10.7 | water 2.20 Mm3 | 2.41s
+[domain-wall] dSB 1315 steps, SA 54 sweeps
+  SA   profit $4.97M +/- 0.39M | invalid  13.0 | unsuitable   0.3 | water 6.25 Mm3 | 2.42s
+  dSB  profit $5.00M +/- 0.30M | invalid   2.9 | unsuitable   0.0 | water 5.97 Mm3 | 2.56s
+
+greedy: profit $-1.58M (model), $-1.55M (free disposal), water 5.98 Mm3
+
+one-hot      SA vs dSB: +173.9%  Mann-Whitney p=6.8e-08
+domain-wall  SA vs dSB: -0.6%  Mann-Whitney p=0.925
+SA   one-hot -> domain-wall: -8.5%  Mann-Whitney p=8.29e-05
+dSB  one-hot -> domain-wall: +152.2%  Mann-Whitney p=6.8e-08
+one-hot     SA   free-disposal profit $5.42M vs greedy $-1.55M
+one-hot     dSB  free-disposal profit $1.98M vs greedy $-1.55M
+domain-wall SA   free-disposal profit $4.97M vs greedy $-1.55M
+domain-wall dSB  free-disposal profit $5.00M vs greedy $-1.55M
+
+wrote G:\Uni\AgriQ An AI and Quantum-Optimized System for Smart Crop Planning\agriq\data\processed\benchmark_results.csv
