@@ -439,8 +439,27 @@ effect changes between $M_{\mathrm{wall}}=1$ and $2$.}
 \label{fig:mwall}
 \end{figure}
 
+\begin{table}[t]
+\centering
+\caption{Domain-wall profit against the ordering penalty, 20 seeds}
+\label{tab:mwall}
+\footnotesize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{lcccc}
+\toprule
+$M_{\mathrm{wall}}$ & SA (M\$) & invalid & dSB (M\$) & invalid \\
+\midrule
+0.25 & $3.43\pm0.57$ & 23.0 & $3.48\pm0.41$ & 20.3 \\
+0.50 & $3.15\pm0.28$ & 13.6 & $3.94\pm0.34$ & 11.1 \\
+1.00 & $4.95\pm0.34$ &  5.0 & $5.05\pm0.45$ &  3.4 \\
+2.00 & $7.17\pm0.03$ &  0.1 & $6.64\pm0.18$ &  0.0 \\
+4.00 & $7.17\pm0.02$ &  0.0 & $6.39\pm0.24$ &  0.0 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 The ordering penalty is a free weight, and published comparisons fix it
-without reporting a sweep. Fig.~\ref{fig:mwall} shows its effect over
+without reporting a sweep. Table~\ref{tab:mwall} and Fig.~\ref{fig:mwall} show its effect over
 $M_{\mathrm{wall}}\in\{0.25,0.5,1,2,4\}$, 20 seeds per point, against the
 one-hot references of \$6.05M (SA) and \$2.04M (dSB) from the same experiment.
 
@@ -500,6 +519,18 @@ enough that encoding and solver choice largely stop mattering. Greedy reaches
 longer flood the market, so the water limit incidentally performs the
 coordination that the optimiser performs deliberately.
 
+This deserves stating plainly rather than leaving implicit: at Jenin's
+licensed allocation the problem is small enough that a trivial heuristic is
+competitive, and the optimisation machinery earns little. It does not follow
+that the encoding result is contingent on that. The result is a property of a
+1{,}914-variable QUBO with ten 174-node cliques, not of Jenin's water
+allocation: any allocation problem of comparable size and coupling density
+presents the same encoding choice, and the water constraint shrinks this
+instance without shrinking that class. The agricultural case is a testbed that
+happens to be real, and the two findings bind at different scales, which is why
+the unconstrained comparison and the budget-feasible plan are reported
+separately rather than merged.
+
 \subsection{Price Robustness}
 
 The optimum is degenerate: inverse demand equalises marginal revenue across
@@ -508,10 +539,26 @@ only in seed agree on 11.5\% of parcels. We therefore compare crop mix by
 area, as $1-$ total variation distance, against a seed-control floor of 94.6\%
 (50 seeds each).
 
+\begin{table}[t]
+\centering
+\caption{Crop-mix similarity to the baseline plan, 50 seeds}
+\label{tab:robust}
+\footnotesize
+\begin{tabular}{lcc}
+\toprule
+Scenario & Profit (M\$/yr) & Mix similarity \\
+\midrule
+\emph{Seed control} & \emph{5.77} & \emph{94.6\%} \\
+LSTM prices / persistence & 6.05 / 5.82 & 94.7 / 93.7\% \\
+Uniform $-15\%$ / $+15\%$ & 3.63 / 8.06 & 95.0 / 95.0\% \\
+Uniform $+30\%$ / perish.\ $+30\%$ & 10.36 / 9.90 & 93.3 / 94.8\% \\
+Uniform $-30\%$ / perish.\ $-30\%$ & 1.72 / 2.61 & 87.7 / 82.4\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
 Every moderate scenario sits at that floor and is therefore
-indistinguishable from solver noise: 94.7\% for the LSTM price vector,
-93.7\% for persistence, 95.0\% for a uniform $\pm15\%$ shift
-and 93.3\% for $+30\%$. Only a 30\% price fall shifts the crop mix materially, to 87.7\% for a
+indistinguishable from solver noise (Table~\ref{tab:robust}). Only a 30\% price fall shifts the crop mix materially, to 87.7\% for a
 uniform fall and 82.4\% for perishables alone, moving land toward grapes,
 olives, oranges and fallow as profit drops to \$1.72M and \$2.61M. The
 asymmetry is economically sensible: a uniform rise scales revenues together and
@@ -522,7 +569,12 @@ cost and forces reallocation toward low-cost perennials.
 \label{sec:limits}
 
 Market size $D_j$ is an assumption and the linear demand curve carries no
-meaning beyond $Q_j=2D_j$. Climate is a single grid cell; the suitability
+meaning beyond $Q_j=2D_j$, so every absolute profit reported here inherits that
+assumption. The encoding and solver comparisons do not: both encodings are
+built from the same instance, so a different $D_j$ rescales all four arms
+together and leaves their ordering, and the percentage differences between
+them, intact. The agricultural magnitudes are a demonstration; the
+computational comparison does not rest on them. Climate is a single grid cell; the suitability
 model has almost no parcel-level resolution, for the reasons in
 Section~\ref{sec:results}-A; phosphorus and potassium are sampled, not
 measured; SoilGrids values are model estimates; and yields are national
