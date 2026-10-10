@@ -47,10 +47,14 @@ individual farmer can observe. A farmer plants on last season's prices without
 knowing what the neighbours intend; when many independently converge on the
 same profitable crop, the combined harvest depresses its price. Every decision
 is individually rational and the aggregate outcome is a collective loss, a
-coordination failure that bites hardest for perishables, which cannot be
-stored until prices recover \refpending. Recent crop-planning models therefore
-treat market absorption as a binding constraint rather than assuming prices
-are exogenous to the plan~\cite{li2025,hou2026}.
+coordination failure that bites hardest where output cannot be held back until
+prices recover. Producer prices in Palestine move sharply year to year: across
+2010--2023 the largest single-year change in the FAOSTAT series~\cite{faostat}
+ranges from 14\% for wheat to 60\% for oranges, and the two crops in our set
+that store well, wheat and olives, sit at the bottom of that range at 14\% and
+23\%. Recent crop-planning models therefore treat market absorption as a
+binding constraint rather than assuming prices are exogenous to the
+plan~\cite{li2025,hou2026}.
 
 Allocating $P$ parcels among $C$ crops admits $C^P$ candidate assignments and
 does not decompose: because revenue depends on aggregate production, the best
@@ -168,18 +172,18 @@ reviewed.
 \toprule
 Study & Focus area & Method & Limitation relative to this study \\
 \midrule
-Breiman~\cite{breiman2001} & Ensemble learning, general & Random Forest (foundational) & Not agricultural; the method applied here to crop suitability \\
-Hochreiter \& Schmidhuber~\cite{hochreiter1997} & Sequence modelling, general & LSTM (foundational) & Not agricultural; the method applied here to price forecasting \\
-Dey et al.~\cite{dey2024} & Crop recommendation & XGBoost on soil/climate features & Suitability only; no forecasting or allocation stage \\
-Saha et al.~\cite{saha2025} & Land suitability, irrigation & ML + LSTM (vegetation), satellite data & LSTM forecasts vegetation area, not prices; no allocation stage \\
-Li et al.~\cite{li2025} & Dynamic multi-plot crop planning & Hybrid SA--GA + neural-network forecasts & Classical metaheuristic; no QUBO or encoding analysis \\
-Hou et al.~\cite{hou2026} & Crop planning under uncertainty & Hybrid PSO--SA + Monte Carlo & No learned forecasts; classical metaheuristic \\
-Zeng et al.~\cite{zeng2024} & Quantum-inspired optimisation & SB and simulated CIM vs.\ D-Wave annealer & Abstract Max-Cut benchmarks; compares solvers, not encodings \\
-Kim et al.~\cite{kim2025} & Large-scale dense QUBO & Hybrid quantum annealing vs.\ classical & Benchmark instances; compares solvers, not encodings \\
-Verma et al.~\cite{verma2025} & Quantum computing in precision agriculture & QCNN + QAOA & No market-clearing prices; no encoding analysis; no SB comparison \\
-Chancellor~\cite{chancellor2019} & Encoding discrete variables & Domain-wall encoding & Theoretical; not evaluated on a real allocation problem \\
-Chen et al.~\cite{chen2021} & Encoding comparison, experimental & Domain-wall vs.\ one-hot on D-Wave hardware & Annealing hardware, abstract problems; one solver class and one ordering-penalty weight \\
-Berwald et al.~\cite{berwald2022} & Encoding theory and dynamics & Variable-count optimality; freezing behaviour & Conjectures the extension to quantum-inspired solvers without testing it \\
+Breiman~\cite{breiman2001} & Ensemble learning, general & Random Forest (foundational) & Not agricultural; the method used here for suitability \\
+Hochreiter \& Schmidhuber~\cite{hochreiter1997} & Sequence modelling, general & LSTM (foundational) & Not agricultural; the method used here for forecasting \\
+Dey et al.~\cite{dey2024} & Crop recommendation & XGBoost on soil/climate features & Suitability only; no forecasting or allocation \\
+Saha et al.~\cite{saha2025} & Land suitability, irrigation & ML + LSTM (vegetation), satellite data & LSTM forecasts vegetation area, not prices \\
+Li et al.~\cite{li2025} & Dynamic multi-plot crop planning & Hybrid SA--GA + neural-network forecasts & Classical; no QUBO or encoding analysis \\
+Hou et al.~\cite{hou2026} & Crop planning under uncertainty & Hybrid PSO--SA + Monte Carlo & No learned forecasts; classical \\
+Zeng et al.~\cite{zeng2024} & Quantum-inspired optimisation & SB and simulated CIM vs.\ D-Wave annealer & Abstract benchmarks; solvers, not encodings \\
+Kim et al.~\cite{kim2025} & Large-scale dense QUBO & Hybrid quantum annealing vs.\ classical & Benchmark instances; solvers, not encodings \\
+Verma et al.~\cite{verma2025} & Quantum computing in precision agriculture & QCNN + QAOA & No market-clearing prices; no encoding analysis \\
+Chancellor~\cite{chancellor2019} & Encoding discrete variables & Domain-wall encoding & Theoretical; not evaluated on a real problem \\
+Chen et al.~\cite{chen2021} & Encoding comparison, experimental & Domain-wall vs.\ one-hot on D-Wave hardware & Annealing hardware; one solver class, one penalty weight \\
+Berwald et al.~\cite{berwald2022} & Encoding theory and dynamics & Variable-count optimality; freezing behaviour & Conjectures the extension without testing it \\
 \bottomrule
 \end{tabular}
 \end{table*}
@@ -194,7 +198,8 @@ polygons~\cite{osm}: of 941 polygons in the Jenin window, 625 have centroids
 outside the West Bank, and the remainder are filtered to 0.1--100~ha, leaving
 174 parcels covering 1{,}464~ha in the Palestinian-administered class of the
 UN OCHA Oslo layer~\cite{ocha}. Climate is NASA POWER~\cite{nasapower} for
-2015--2024: 465~mm rainfall per year, 20.7$^\circ$C, 68.7\% relative humidity.
+2015--2024 (Fig.~\ref{fig:map}): 465~mm rainfall per year, 20.7$^\circ$C and
+68.7\% relative humidity.
 Jenin resolves as a single grid cell, so climate is identical across parcels
 and all parcel-level variation comes from soil and land use. Soil properties
 are SoilGrids 250\,m estimates~\cite{poggio2021}.
@@ -207,6 +212,15 @@ rescaled to the PCBS open-field level for the northern West Bank~\cite{pcbs}.
 Irrigation requirements follow FAO-56~\cite{allen1998}. Production cost is an
 assumption: a share of baseline gross revenue typical of the system type, held
 fixed when prices are perturbed. Table~\ref{tab:crops} lists the parameters.
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=0.80\columnwidth]{figures/fig_map.pdf}
+\caption{The 174 study parcels; marker area is proportional to parcel size.
+Median parcel is 1.69~ha and mean 8.41~ha, so the instance is dominated by
+smallholdings with a few large blocks.}
+\label{fig:map}
+\end{figure}
 
 \begin{table}[t]
 \centering
@@ -425,36 +439,21 @@ effect changes between $M_{\mathrm{wall}}=1$ and $2$.}
 \label{fig:mwall}
 \end{figure}
 
-\begin{table}[t]
-\centering
-\caption{Domain-wall profit against the ordering penalty, 20 seeds}
-\label{tab:mwall}
-\footnotesize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lcccc}
-\toprule
-$M_{\mathrm{wall}}$ & SA (M\$) & invalid & dSB (M\$) & invalid \\
-\midrule
-0.25 & $3.43\pm0.57$ & 23.0 & $3.48\pm0.41$ & 20.3 \\
-0.50 & $3.15\pm0.28$ & 13.6 & $3.94\pm0.34$ & 11.1 \\
-1.00 & $4.95\pm0.34$ &  5.0 & $5.05\pm0.45$ &  3.4 \\
-2.00 & $7.17\pm0.03$ &  0.1 & $6.64\pm0.18$ &  0.0 \\
-4.00 & $7.17\pm0.02$ &  0.0 & $6.39\pm0.24$ &  0.0 \\
-\bottomrule
-\end{tabular}
-\end{table}
-
 The ordering penalty is a free weight, and published comparisons fix it
-without reporting a sweep. Table~\ref{tab:mwall} and Fig.~\ref{fig:mwall} show
-its effect, with the one-hot references at \$6.05M (SA) and \$2.04M (dSB) from
-the same experiment.
+without reporting a sweep. Fig.~\ref{fig:mwall} shows its effect over
+$M_{\mathrm{wall}}\in\{0.25,0.5,1,2,4\}$, 20 seeds per point, against the
+one-hot references of \$6.05M (SA) and \$2.04M (dSB) from the same experiment.
 
-Profit rises monotonically with the weight for both solvers until it
-saturates near $M_{\mathrm{wall}}=2$, where invalid parcels reach zero and the
-seed variance collapses to $\pm0.03$M. Domain-wall exceeds one-hot for dSB at
-every weight tested, by 67\% at the weakest and 226\% at the strongest. For SA
-the comparison changes sign: a 45\% deficit at $M_{\mathrm{wall}}=0.25$, 17\%
-at the conventional value of 1, and an 18\% \emph{advantage} at 2 and above.
+Profit rises monotonically with the weight for both solvers until it saturates
+near $M_{\mathrm{wall}}=2$. Invalid parcels fall with it, from 23.0 (SA) and
+20.3 (dSB) at the weakest weight through 5.0 and 3.4 at $M_{\mathrm{wall}}=1$
+to 0.1 and 0.0 at $M_{\mathrm{wall}}=2$, where the seed variance also
+collapses to $\pm0.03$M: a strong chain penalty does not merely permit valid
+solutions, it makes the landscape tractable. Domain-wall exceeds one-hot for
+dSB at every weight tested, by 67\% at the weakest and 226\% at the strongest.
+For SA the comparison changes sign: a 45\% deficit at $M_{\mathrm{wall}}=0.25$,
+17\% at the conventional value of 1, and an 18\% \emph{advantage} at 2 and
+above.
 
 Two conclusions follow. The domain-wall advantage reported on annealing
 hardware~\cite{chen2021} does extend to a quantum-inspired solver on a real
@@ -509,27 +508,12 @@ only in seed agree on 11.5\% of parcels. We therefore compare crop mix by
 area, as $1-$ total variation distance, against a seed-control floor of 94.6\%
 (50 seeds each).
 
-\begin{table}[t]
-\centering
-\caption{Crop-mix similarity to the baseline plan, 50 seeds}
-\label{tab:robust}
-\footnotesize
-\begin{tabular}{lcc}
-\toprule
-Scenario & Profit (M\$/yr) & Mix similarity \\
-\midrule
-\emph{Seed control} & \emph{5.77} & \emph{94.6\%} \\
-LSTM prices / persistence & 6.05 / 5.82 & 94.7 / 93.7\% \\
-Uniform $-15\%$ / $+15\%$ & 3.63 / 8.06 & 95.0 / 95.0\% \\
-Uniform $+30\%$ / perish.\ $+30\%$ & 10.36 / 9.90 & 93.3 / 94.8\% \\
-Uniform $-30\%$ / perish.\ $-30\%$ & 1.72 / 2.61 & 87.7 / 82.4\% \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Every moderate scenario sits at the seed-control floor and is therefore
-indistinguishable from solver noise. Only a 30\% price fall shifts the crop
-mix materially, moving land toward grapes, olives, oranges and fallow. The
+Every moderate scenario sits at that floor and is therefore
+indistinguishable from solver noise: 94.7\% for the LSTM price vector,
+93.7\% for persistence, 95.0\% for a uniform $\pm15\%$ shift
+and 93.3\% for $+30\%$. Only a 30\% price fall shifts the crop mix materially, to 87.7\% for a
+uniform fall and 82.4\% for perishables alone, moving land toward grapes,
+olives, oranges and fallow as profit drops to \$1.72M and \$2.61M. The
 asymmetry is economically sensible: a uniform rise scales revenues together and
 barely changes relative margins, whereas a fall pushes marginal crops below
 cost and forces reallocation toward low-cost perennials.
@@ -537,43 +521,38 @@ cost and forces reallocation toward low-cost perennials.
 \section{Limitations}
 \label{sec:limits}
 
-Market size $D_j$ is an assumption. The linear demand curve carries no meaning
-beyond $Q_j=2D_j$. Climate comes from a single grid cell, and the suitability
-model has almost no parcel-level resolution for the reasons given in
-Section~\ref{sec:results}-A; phosphorus and potassium are sampled rather than
-measured, and SoilGrids values are model estimates. Yields are national series
-rescaled to regional open-field levels. The PCBS water figure covers licensed
-wells only and so excludes springs, purchased supply, treated-wastewater reuse
-and unlicensed abstraction; it is a lower bound on agricultural water, and the
-budget-feasible plans are correspondingly conservative. Reported profits are of
-decoded plans, so a solver that leaves many blocks outside the valid subspace
-is evaluated after an implicit argmax repair. Wall-clock matching is enforced
-to 15\% but not exactly, and the host exhibited threefold timing variation
-between runs. At 1{,}914 variables with ten 174-node crop cliques the instance
-exceeds the largest fully connected problem directly embeddable on current
-annealing hardware ($K_{150}$ on Pegasus~\cite{dwaveembed}), so the comparison
-is between classical and quantum-inspired solvers, not quantum hardware.
+Market size $D_j$ is an assumption and the linear demand curve carries no
+meaning beyond $Q_j=2D_j$. Climate is a single grid cell; the suitability
+model has almost no parcel-level resolution, for the reasons in
+Section~\ref{sec:results}-A; phosphorus and potassium are sampled, not
+measured; SoilGrids values are model estimates; and yields are national
+series rescaled to regional open-field levels. The PCBS figure covers
+licensed wells only, excluding springs, purchased supply, wastewater reuse
+and unlicensed abstraction, so it is a lower bound and the budget-feasible
+plans are conservative. Reported profits are of decoded plans, so a solver
+leaving many blocks outside the valid subspace is scored after an implicit
+argmax repair. Wall-clock matching is enforced to 15\%, not exactly, on a
+host that showed threefold timing variation. At 1{,}914 variables with ten
+174-node cliques the instance exceeds the largest fully connected problem
+directly embeddable on current annealing hardware ($K_{150}$ on
+Pegasus~\cite{dwaveembed}), so this compares classical against
+quantum-inspired solvers, not quantum hardware.
 
 \section{Conclusion}
 \label{sec:concl}
 
 On a real 1{,}914-variable crop-allocation QUBO, constraint encoding decided
-whether a quantum-inspired solver was usable: one-hot encoding left discrete
-simulated bifurcation with 130 of 174 parcels invalid, and domain-wall
-encoding raised its profit by 138\% and brought it level with simulated
-annealing. Sweeping the domain-wall ordering penalty showed that this weight,
-which published comparisons fix without reporting, determines the sign of the
-effect for annealing: a 17\% deficit at the conventional value and an 18\%
-advantage at twice it, with both solvers improving and invalid assignments
-vanishing as the weight rises. The domain-wall advantage therefore does extend
-from annealing hardware to quantum-inspired solvers, but any single-weight
-comparison risks reporting its opposite. A myopic greedy plan lost \$10.5M by
-flooding the market. Held to the licensed agricultural water available in
-Jenin, every configuration converges to \$1.3--1.8M on a sixth of the land,
-and the choice of encoding and solver largely ceases to matter. Future work
-should tune the ordering penalty per solver rather than globally, measure
-freezing behaviour to test the mechanism proposed by Berwald et
-al.~\cite{berwald2022}, and obtain parcel-level soil and crop-level demand
+whether a quantum-inspired solver was usable at all, and the weight of the
+domain-wall ordering penalty decided the sign of the effect for annealing.
+The domain-wall advantage therefore does extend from annealing hardware to
+quantum-inspired solvers, as Berwald et al.~\cite{berwald2022} conjectured,
+but any single-weight comparison risks reporting its opposite. Held to the
+licensed agricultural water available in Jenin, every configuration converges
+to \$1.3--1.8M on a sixth of the land, and the choice of encoding and solver
+largely ceases to matter: the computational question and the agricultural one
+bind at different scales. Future work should tune the ordering penalty per
+solver rather than globally, measure freezing behaviour to test the mechanism
+proposed by Berwald et al., and obtain parcel-level soil and crop-level demand
 data adequate to the allocation question.
 
 {\footnotesize
