@@ -3,15 +3,15 @@
 \subsection{Study Area and Data}
 All parcel, climate, soil, price and yield inputs come from public sources.
 Parcels are OpenStreetMap land-use polygons~\cite{osm}. Of 941 polygons, 316
-have a centroid in the West Bank; these were assigned an Oslo class from the
-OCHA layer~\cite{ocha}, which does not separate Areas A and B, and restricted
-to 0.1--100\,ha. This leaves 174 A/B parcels (1{,}464\,ha;
-Fig.~\ref{fig:map}) and 110 Area C parcels (706\,ha).
+have a centroid in the West Bank. These were classified with the OCHA
+administrative layer~\cite{ocha}, restricted to the class under Palestinian
+administration, and filtered to 0.1--100\,ha, leaving 174 parcels covering
+1{,}464\,ha (Fig.~\ref{fig:map}).
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=0.92\columnwidth]{figures/fig_map.pdf}
-\caption{The 174 study parcels in Areas A/B of Jenin governorate.}
+\caption{The 174 study parcels in Jenin governorate.}
 \label{fig:map}
 \end{figure}
 
@@ -19,7 +19,7 @@ Monthly NASA POWER data for 2015--2024~\cite{nasapower} give 465\,mm of
 annual rainfall (90\% in November--March), 20.7\,$^\circ$C and 68.7\%
 relative humidity. The governorate is a single grid cell, so climate is the
 same for every parcel. Soil properties are SoilGrids 250\,m
-estimates~\cite{poggio2021} for 149 A/B parcels; the other 25 take the
+estimates~\cite{poggio2021} for 149 of the parcels; the other 25 take the
 governorate mean.
 
 Prices are FAOSTAT producer means for 2019--2023~\cite{faostat}. The year
@@ -81,7 +81,7 @@ and vineyards, and 0.9 for annuals and 0.35 for tree crops elsewhere. P and
 K have no parcel-level source and were drawn from published ranges in 200
 Monte Carlo samples, giving $s_{ij}$ a mean standard deviation of 0.025.
 Available N is an assumed 2\% of SoilGrids total N. A pair is unsuitable if
-its probability is zero or fewer than 20\% of A/B parcels score at or below
+its probability is zero or fewer than 20\% of parcels score at or below
 it for crop $j$; with heavy ties, this marks 96 of 1{,}740 pairs.
 
 \subsection{QUBO Formulation}
@@ -98,8 +98,8 @@ hectare, and $\lambda = 0.15$\,USD/m$^3$ unless swept. With
 $\beta_j = p_j/(2D_j)$, price falls linearly with supply and crop revenue
 peaks at $Q_j = D_j$. The $Q_j^2$ term couples all parcels sharing a crop
 into ten 174-node cliques. No crop-level demand data exist for Jenin, so market size is an
-assumption, $D_j = 0.6\,A_{AB}\,y_j$ with $A_{AB}$ the total A/B area, kept
-fixed across counterfactuals. For the solvers, the negated objective is
+assumption, $D_j = 0.6\,A\,y_j$ with $A$ the total study area, kept fixed
+across counterfactuals. For the solvers, the negated objective is
 divided by its largest linear coefficient, and penalties of weight $M = 0.5$
 are added for parcels without exactly one crop and for unsuitable pairs.
 Profit is recomputed in USD from each decoded plan, without the water
@@ -112,8 +112,10 @@ several crops remain reachable. \textbf{Domain-wall}
 encoding~\cite{chancellor2019} uses $C-1 = 10$ binaries $d_{ij}$ per
 parcel, kept non-increasing in $j$ by an ordering penalty of weight
 $M_{\mathrm{wall}}$, and reads $x_{ij} = d_{ij} - d_{i,j+1}$ with
-$d_{i0} = 1$ and $d_{iC} = 0$ (1{,}740 variables). It replaces only the
-one-crop penalty, so both encodings pose the same problem. Decoding takes a
+$d_{i0} = 1$ and $d_{iC} = 0$ (1{,}740 variables). It replaces the one-crop penalty with this ordering penalty and retains the
+suitability penalty, so the two encodings pose the same allocation problem but
+not the same penalty landscape; Section~\ref{sec:results} measures how much
+that distinction costs. Decoding takes a
 one-hot block's lowest-indexed active option (fallow if none) and reads a
 domain-wall chain up to its first zero; invalid parcels are counted before
 decoding. The main
@@ -141,7 +143,9 @@ market coupling. The Budget column of Table~\ref{tab:bench} reports profit
 after fallowing parcels of every plan, greedy included, in ascending margin
 per m$^3$ until the water budget is met; other profits precede this repair.
 
-\textbf{Protocol.} Each arm received a fixed wall-clock budget of 2.5\,s
+\textbf{Protocol.} Following benchmarking practice for stochastic
+solvers~\cite{beiranvand2017}, each arm received a fixed wall-clock budget
+of 2.5\,s
 per run, which corresponds to 2{,}934 and 4{,}313 dSB steps and 270 and 249
 SA sweeps on the one-hot and domain-wall matrices. Arms whose median
 time deviated by over 12\% were re-run, and results were rejected beyond

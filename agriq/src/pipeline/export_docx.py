@@ -21,6 +21,31 @@ B = chr(92)
 
 tex = io.open(TEX, encoding="utf-8").read()
 
+
+def expand_inputs(src, depth=0):
+    r"""Inline \input{...} so sections kept in their own file are exported.
+
+    The Methodology lives in methodology.tex and is pulled in by main.tex at
+    build time; without this the Word copy silently lost an entire section,
+    one figure and one table while still looking well-formed.
+    """
+    if depth > 5:
+        return src
+
+    def one(m):
+        name = m.group(1).strip()
+        path = os.path.join(PAPER, name if name.endswith(".tex") else name + ".tex")
+        if not os.path.exists(path):
+            print(f"  WARNING: \\input{{{name}}} not found, section will be missing")
+            return ""
+        print(f"  inlined {os.path.basename(path)}")
+        return expand_inputs(io.open(path, encoding="utf-8").read(), depth + 1)
+
+    return re.sub(r"\\input\{([^}]+)\}", one, src)
+
+
+tex = expand_inputs(tex)
+
 # ---------------------------------------------------------------- citations
 bbl = io.open(BBL, encoding="utf-8").read()
 keys = re.findall(r"\\bibitem\{([^}]+)\}", bbl)
