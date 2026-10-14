@@ -32,3 +32,6 @@ agriq/_deprecated_syrian_scaffold/
 # Personal hour submissions, not project code
 work_hours_to_enter.md
 worklog_*.csv
+
+# Blinded build output (regenerate with src/pipeline/build_paper.py)
+agriq/paper/main_anonymous.pdf

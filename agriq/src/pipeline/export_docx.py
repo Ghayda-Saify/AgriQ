@@ -127,8 +127,27 @@ def para(text, size=10, bold=False, italic=False, align=None, space_after=6):
 
 title = inline(re.search(r"\\title\{(.*?)\n*\}", tex, re.S).group(1).replace(r"\\", " "))
 para(title, size=16, bold=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=4)
-para("Anonymous Submission  |  NGIA-QC 2026 \u2014 Double-blind review",
-     size=10, italic=True, align=WD_ALIGN_PARAGRAPH.CENTER, space_after=14)
+def byline():
+    r"""Read the author block that main.tex's \ifblind toggle selects.
+
+    This was hardcoded to "Anonymous Submission", so the Word copy carried the
+    blinded byline even when the PDF was the named one. Read the toggle and
+    take the matching branch instead.
+    """
+    m = re.search(r"\\blind(true|false)\s*%\s*AUTHORSHIP-TOGGLE", tex)
+    blind = (m.group(1) == "true") if m else True
+    branch = re.search(
+        r"\\ifblind(.*?)\\else(.*?)\\fi" if not blind else r"\\ifblind(.*?)\\else",
+        tex, re.S)
+    if not branch:
+        return "Anonymous Submission  |  NGIA-QC 2026 \u2014 Double-blind review"
+    block = branch.group(1) if blind else branch.group(2)
+    parts = re.findall(r"\\IEEEauthorblock[NA]\{(.*?)\}", block, re.S)
+    return "  |  ".join(inline(p) for p in parts if inline(p))
+
+
+para(byline(), size=10, italic=True,
+     align=WD_ALIGN_PARAGRAPH.CENTER, space_after=14)
 
 abstract = inline(re.search(r"\\begin\{abstract\}(.*?)\\end\{abstract\}", tex, re.S).group(1))
 p = doc.add_paragraph()

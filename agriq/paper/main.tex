@@ -8,13 +8,30 @@
 
 \newcommand{\refpending}{\textbf{[ref.\ pending]}}
 
+% Authorship toggle. NGIA-QC 2026 reviews double-blind, so the submitted PDF
+% must carry no author names, while the supervisor and the university want a
+% named copy. Both are built from this one file by build_paper.py, which
+% rewrites only the single marked line below.
+%
+% Do NOT write the toggle commands anywhere else in this file, comments
+% included. An earlier build script replaced the first occurrence in the
+% source, found it inside this very comment, rewrote the comment instead of
+% the toggle, and produced two named PDFs while reporting success.
+\newif\ifblind
+\blindfalse % AUTHORSHIP-TOGGLE -- build_paper.py rewrites this line
+
 \begin{document}
 
 \title{Constraint Encoding and Penalty Weight Determine\\Quantum-Inspired
 Solver Performance on a Real Crop-Allocation QUBO}
 
-\author{\IEEEauthorblockN{Anonymous Submission}
-\IEEEauthorblockA{NGIA-QC 2026 --- Double-blind review}}
+\ifblind
+  \author{\IEEEauthorblockN{Anonymous Submission}
+  \IEEEauthorblockA{NGIA-QC 2026 --- Double-blind review}}
+\else
+  \author{\IEEEauthorblockN{Ghaydaa Saify and Tala Alhendi}
+  \IEEEauthorblockA{An-Najah National University, Nablus, Palestine}}
+\fi
 
 \maketitle
 \thispagestyle{empty}
